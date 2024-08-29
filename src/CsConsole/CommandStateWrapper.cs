@@ -1,21 +1,21 @@
 ﻿namespace CsConsole;
 
-public class CommandWrapper<TState> : ICommand<TState> where TState : ICommandState
+public class AsyncCommandAdaptor<TState> : IAsyncCommand<TState> where TState : ICommandState
 {
     readonly Func<ArgumentSource, IConsoleOutput, TState, CancellationToken, Task> _invoke;
     readonly ICommand _command;
 
-    public static ICommand<TState> Wrap(ICommand command) =>
+    public static IAsyncCommand<TState> Wrap(ICommand command) =>
         command switch
         {
-            ICommand<TState> stateful => stateful,
-            ISyncCommand<TState> sync => new CommandWrapper<TState>(sync),
-            IStatelessSyncCommand statelessSync => new CommandWrapper<TState>(statelessSync),
-            IStatelessCommand stateless => new CommandWrapper<TState>(stateless),
+            IAsyncCommand<TState> stateful => stateful,
+            ISyncCommand<TState> sync => new AsyncCommandAdaptor<TState>(sync),
+            ISyncCommand statelessSync => new AsyncCommandAdaptor<TState>(statelessSync),
+            IAsyncCommand stateless => new AsyncCommandAdaptor<TState>(stateless),
             _ => throw new ArgumentOutOfRangeException($"Unexpected command type \"{command.GetType().Name}\"")
         };
 
-    public CommandWrapper(ISyncCommand<TState> command)
+    AsyncCommandAdaptor(ISyncCommand<TState> command)
     {
         _command = command ?? throw new ArgumentNullException(nameof(command));
         _invoke = (args, o, state, _) =>
@@ -25,7 +25,7 @@ public class CommandWrapper<TState> : ICommand<TState> where TState : ICommandSt
         };
     }
 
-    public CommandWrapper(IStatelessSyncCommand command)
+    AsyncCommandAdaptor(ISyncCommand command)
     {
         _command = command ?? throw new ArgumentNullException(nameof(command));
         _invoke = (args, o, _, _) =>
@@ -35,7 +35,7 @@ public class CommandWrapper<TState> : ICommand<TState> where TState : ICommandSt
         };
     }
 
-    public CommandWrapper(IStatelessCommand command)
+    AsyncCommandAdaptor(IAsyncCommand command)
     {
         _command = command ?? throw new ArgumentNullException(nameof(command));
         _invoke = (args, o, _, ct) => command.InvokeAsync(args, o, ct);

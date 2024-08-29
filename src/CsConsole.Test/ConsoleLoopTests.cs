@@ -10,7 +10,7 @@ public class ConsoleLoopTests
     [Fact]
     public async Task QuitCommand()
     {
-        var quit = new AdHocSyncCommand<TestState>("quit", (_, _, state) => state.Done = true);
+        var quit = new SyncCommand<TestState>("quit", (_, _, state) => state.Done = true);
         var parser = new CommandParser<TestState>();
         parser.Add(quit);
 

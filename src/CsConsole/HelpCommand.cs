@@ -1,6 +1,6 @@
 ﻿namespace CsConsole;
 
-public class HelpCommand(ICommandParser parser) : IStatelessSyncCommand
+public class HelpCommand(ICommandParser parser) : ISyncCommand
 {
     public string[] Names => ["help", "?", "h"];
     public string Description => "When given a command line, shows detailed info on the command. When run without an argument, lists all available commands.";

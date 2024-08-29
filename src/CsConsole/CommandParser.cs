@@ -3,7 +3,7 @@
 public class CommandParser<TState> : ICommandParser where TState : ICommandState
 {
     readonly object _syncRoot = new();
-    readonly Dictionary<string, ICommand<TState>> _commands = new(StringComparer.InvariantCultureIgnoreCase);
+    readonly Dictionary<string, IAsyncCommand<TState>> _commands = new(StringComparer.InvariantCultureIgnoreCase);
 
     public IEnumerable<ICommand> Commands { get { lock (_syncRoot) return _commands.Values.Distinct(); } }
     public bool TryGetCommand(string name, out ICommand? command)
@@ -18,7 +18,7 @@ public class CommandParser<TState> : ICommandParser where TState : ICommandState
 
     public void Add(ICommand command)
     {
-        var typedCommand = CommandWrapper<TState>.Wrap(command);
+        var typedCommand = AsyncCommandAdaptor<TState>.Wrap(command);
         lock (_syncRoot)
         {
             foreach (var alias in typedCommand.Names)
@@ -33,7 +33,7 @@ public class CommandParser<TState> : ICommandParser where TState : ICommandState
 
     public async Task Handle(IList<string> args, IConsoleOutput o, TState state, CancellationToken ct)
     {
-        ICommand<TState>? command;
+        IAsyncCommand<TState>? command;
         lock (_syncRoot)
             if (!_commands.TryGetValue(args[0], out command))
                 throw new ConsoleCommandException($"Unknown command \"{args[0]}\"");

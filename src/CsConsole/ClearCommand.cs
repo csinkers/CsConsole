@@ -1,6 +1,6 @@
 ﻿namespace CsConsole;
 
-public class ClearCommand : IStatelessSyncCommand
+public class ClearCommand : ISyncCommand
 {
     public string[] Names => ["clear", "cls"];
     public string Description => "Clears the screen";
