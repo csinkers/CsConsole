@@ -3,7 +3,8 @@
 public class HelpCommand(ICommandParser parser) : ISyncCommand
 {
     public string[] Names => ["help", "?", "h"];
-    public string Description => "When given a command line, shows detailed info on the command. When run without an argument, lists all available commands.";
+    public string Description =>
+        "When given a command line, shows detailed info on the command. When run without an argument, lists all available commands.";
     public string? ShortDescription => null;
     public string Usage => "[command]";
 
@@ -32,7 +33,10 @@ public class HelpCommand(ICommandParser parser) : ISyncCommand
 
     void ListCommands(IConsoleOutput o)
     {
-        var commands = parser.Commands.OrderBy(x => x.Names[0]).Select(x => (Name: x.Names[0], Command: x)).ToList();
+        var commands = parser
+            .Commands.OrderBy(x => x.Names[0])
+            .Select(x => (Name: x.Names[0], Command: x))
+            .ToList();
         int maxLen = commands.Max(x => x.Name.Length);
 
         foreach (var (name, command) in commands)
@@ -41,7 +45,9 @@ public class HelpCommand(ICommandParser parser) : ISyncCommand
             if (command.Names.Length > 1)
                 aliases = $" [{string.Join(", ", command.Names.Skip(1))}]";
 
-            o.WriteLine($"{name.PadRight(maxLen)}: {command.ShortDescription ?? command.Description}{aliases}");
+            o.WriteLine(
+                $"{name.PadRight(maxLen)}: {command.ShortDescription ?? command.Description}{aliases}"
+            );
         }
     }
 }

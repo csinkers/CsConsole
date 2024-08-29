@@ -17,7 +17,10 @@ public class TestConsole(params string[] input) : IConsoleInput, IConsoleOutput
             : input[_inputIndex++];
 
     public void Clear() => Output.Clear();
+
     public void Write(string message) => Output.Append(message);
+
     public void WriteLine() => WriteLine("");
+
     public void WriteLine(string message) => Write(message + Environment.NewLine);
 }

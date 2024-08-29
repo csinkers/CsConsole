@@ -1,11 +1,21 @@
 ﻿namespace CsConsole;
 
-public class CommandParser<TState> : ICommandParser where TState : ICommandState
+public class CommandParser<TState> : ICommandParser
+    where TState : ICommandState
 {
     readonly object _syncRoot = new();
-    readonly Dictionary<string, IAsyncCommand<TState>> _commands = new(StringComparer.InvariantCultureIgnoreCase);
+    readonly Dictionary<string, IAsyncCommand<TState>> _commands =
+        new(StringComparer.InvariantCultureIgnoreCase);
 
-    public IEnumerable<ICommand> Commands { get { lock (_syncRoot) return _commands.Values.Distinct(); } }
+    public IEnumerable<ICommand> Commands
+    {
+        get
+        {
+            lock (_syncRoot)
+                return _commands.Values.Distinct();
+        }
+    }
+
     public bool TryGetCommand(string name, out ICommand? command)
     {
         lock (_syncRoot)
@@ -24,14 +34,20 @@ public class CommandParser<TState> : ICommandParser where TState : ICommandState
             foreach (var alias in typedCommand.Names)
                 if (_commands.TryGetValue(alias, out var existing))
                     throw new ConsoleCommandException(
-                        $"Could not register alias \"{alias}\" for command {typedCommand} as it is already registered by command {existing}");
+                        $"Could not register alias \"{alias}\" for command {typedCommand} as it is already registered by command {existing}"
+                    );
 
             foreach (var alias in typedCommand.Names)
                 _commands[alias] = typedCommand;
         }
     }
 
-    public async Task Handle(IList<string> args, IConsoleOutput o, TState state, CancellationToken ct)
+    public async Task Handle(
+        IList<string> args,
+        IConsoleOutput o,
+        TState state,
+        CancellationToken ct
+    )
     {
         IAsyncCommand<TState>? command;
         lock (_syncRoot)

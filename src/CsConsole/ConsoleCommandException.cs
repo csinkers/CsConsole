@@ -3,5 +3,7 @@
 public class ConsoleCommandException : Exception
 {
     public ConsoleCommandException() { }
-    public ConsoleCommandException(string message) : base(message) { }
+
+    public ConsoleCommandException(string message)
+        : base(message) { }
 }

@@ -2,7 +2,8 @@
 
 namespace CsConsole;
 
-public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state) where TState : ICommandState
+public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state)
+    where TState : ICommandState
 {
     public async Task RunMain(IConsoleInput i, IConsoleOutput o)
     {
@@ -19,7 +20,11 @@ public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state) whe
             }
             catch (ConsoleCommandException cce)
             {
-                o.WithForeground(ConsoleColor.Red, cce.Message, static (o2, msg) => o2.WriteLine(msg));
+                o.WithForeground(
+                    ConsoleColor.Red,
+                    cce.Message,
+                    static (o2, msg) => o2.WriteLine(msg)
+                );
             }
         }
 
@@ -75,13 +80,22 @@ public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state) whe
 
                         sb.Clear();
                     }
-                    else sb.Append(c);
+                    else
+                        sb.Append(c);
                     break;
 
-                case 'n': sb.Append(escaped ? '\n' : c); break;
-                case 'r': sb.Append(escaped ? '\r' : c); break;
-                case 't': sb.Append(escaped ? '\t' : c); break;
-                default: sb.Append(c); break;
+                case 'n':
+                    sb.Append(escaped ? '\n' : c);
+                    break;
+                case 'r':
+                    sb.Append(escaped ? '\r' : c);
+                    break;
+                case 't':
+                    sb.Append(escaped ? '\t' : c);
+                    break;
+                default:
+                    sb.Append(c);
+                    break;
             }
         }
 

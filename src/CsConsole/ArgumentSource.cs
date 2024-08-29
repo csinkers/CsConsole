@@ -6,8 +6,9 @@ public class ArgumentSource(IList<string> args, int n)
     int _n = n;
     public int Remaining => _args.Count - _n;
 
-    public string Arg(string name)
-        => Optional() ?? throw new ConsoleCommandException($"Expected parameter \"{name}\"");
+    public string Arg(string name) =>
+        Optional() ?? throw new ConsoleCommandException($"Expected parameter \"{name}\"");
+
     public string? Optional() => _n >= _args.Count ? null : _args[_n++];
 
     public int Int(string name)
