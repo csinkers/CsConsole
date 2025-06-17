@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace CsConsole;
+﻿namespace CsConsole;
 
 public interface IConsoleOutput
 {
