@@ -1,19 +1,19 @@
 #pragma once // CsConsole.h - A simple console command library for C++20 applications
-#include <string>
-#include <utility>
-#include <vector>
-#include <memory>
-#include <map>
-#include <set>
 #include <algorithm>
+#include <format>
 #include <functional>
-#include <stdexcept>
 #include <iostream>
-#include <sstream>
-#include <future>
+#include <map>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <ranges>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 /* Example usage:
 #include "CsConsole.h"
@@ -134,6 +134,35 @@ class ArgumentSource final
 	std::vector<std::string> m_args;
 	size_t m_index;
 
+	static int ToInt(const std::string& s)
+	{
+		try { return std::stoi(s); }
+		catch (...) { throw ConsoleCommandException("Could not parse \"" + s + "\" as a whole number"); }
+	}
+
+	static uint32_t ToUInt32(const std::string& s)
+	{
+		try { return static_cast<uint32_t>(std::stoul(s)); }
+		catch (...) { throw ConsoleCommandException("Could not parse \"" + s + "\" as a 32-bit unsigned integer"); }
+	}
+
+	static bool ToBool(const std::string& s)
+	{
+		if (s == "0") return false;
+		if (s == "1") return true;
+		if (s == "true") return true;
+		if (s == "false") return false;
+		throw ConsoleCommandException("Could not parse \"" + s + "\" as a bool (e.g. true, false, 1, 0)");
+	}
+
+	template <class TFrom, class TTo>
+	static std::optional<TTo> Map(const std::optional<TFrom>& from, const std::function<TTo(const TFrom&)>& converter)
+	{
+		return from.has_value()
+			? std::optional<TTo>(converter(from.value()))
+			: std::nullopt;
+	}
+
 public:
 	ArgumentSource(std::vector<std::string> args, size_t index)
 		: m_args(std::move(args)), m_index(index)
@@ -159,18 +188,11 @@ public:
 		return m_args[m_index++];
 	}
 
-	int Int(const std::string& name)
-	{
-		const std::string raw = Arg(name);
-		try
-		{
-			return std::stoi(raw);
-		}
-		catch (...)
-		{
-			throw ConsoleCommandException("Could not parse \"" + raw + "\" as a whole number");
-		}
-	}
+	int Int(const std::string& name)         { const std::string raw = Arg(name); return ToInt(raw); }
+	uint32_t UInt32(const std::string& name) { const std::string raw = Arg(name); return ToUInt32(raw); }
+	bool Bool(const std::string& name)       { const std::string raw = Arg(name); return ToBool(raw); }
+	std::optional<int> OptionalInt()         { return Map<std::string, int>(Optional(), ToInt); }
+	std::optional<bool> OptionalBool()       { return Map<std::string, bool>(Optional(), ToBool); }
 };
 
 class ICommand
@@ -230,8 +252,23 @@ class SyncCommand final : public ISyncCommand
 	std::string m_usage;
 
 public:
-	SyncCommand(const std::string_view name, std::string_view description, SyncCommandMethod func)
+	SyncCommand(const std::string_view name, const std::string_view description, SyncCommandMethod func)
 		: m_names{ std::string(name) }, m_func(std::move(func)), m_description(description)
+	{
+	}
+
+	SyncCommand(const std::vector<std::string_view>& names, const std::string_view description, SyncCommandMethod func)
+		: m_names(names.begin(), names.end()), m_func(std::move(func)), m_description(description)
+	{
+	}
+
+	SyncCommand(const std::string_view name, const std::string_view description, const std::string_view usage, SyncCommandMethod func)
+		: m_names{ std::string(name) }, m_func(std::move(func)), m_description(description), m_usage(usage)
+	{
+	}
+
+	SyncCommand(const std::vector<std::string_view>& names, const std::string_view description, const std::string_view usage, SyncCommandMethod func)
+		: m_names(names.begin(), names.end()), m_func(std::move(func)), m_description(description), m_usage(usage)
 	{
 	}
 
@@ -260,8 +297,23 @@ class SyncCommandT final : public ISyncCommandT<T>
 	std::string m_usage;
 
 public:
-	SyncCommandT(const std::string_view name, std::string_view description, SyncCommandMethodT<T> func)
+	SyncCommandT(const std::string_view name, const std::string_view description, SyncCommandMethodT<T> func)
 		: m_names{ std::string(name) }, m_func(std::move(func)), m_description(description)
+	{
+	}
+
+	SyncCommandT(const std::vector<std::string_view>& names, const std::string_view description, SyncCommandMethodT<T> func)
+		: m_names(names.begin(), names.end()), m_func(std::move(func)), m_description(description)
+	{
+	}
+
+	SyncCommandT(const std::string_view name, const std::string_view description, const std::string_view usage, SyncCommandMethodT<T> func)
+		: m_names{ std::string(name) }, m_func(std::move(func)), m_description(description), m_usage(usage)
+	{
+	}
+
+	SyncCommandT(const std::vector<std::string_view>& names, const std::string_view description, const std::string_view usage, SyncCommandMethodT<T> func)
+		: m_names(names.begin(), names.end()), m_func(std::move(func)), m_description(description), m_usage(usage)
 	{
 	}
 
@@ -315,8 +367,9 @@ class ConsoleOutput final : public IConsoleOutput
 		case ConsoleColor::Magenta:      return isForeground ? 95 : 105;
 		case ConsoleColor::Cyan:         return isForeground ? 96 : 106;
 		case ConsoleColor::White:        return isForeground ? 97 : 107;
-		default:                         return isForeground ? 39 : 49; // Default
 		}
+
+		return isForeground ? 39 : 49; // Default
 	}
 
 	static void SetAnsiColor(ConsoleColor color, bool isForeground)
@@ -353,7 +406,7 @@ public:
 	}
 
 	void Write(const std::string& message) override { std::cout << message; }
-	void WriteLine() override { std::cout << '\n'; } 
+	void WriteLine() override { std::cout << '\n'; }
 	void WriteLine(const std::string& message) override { std::cout << message << '\n'; }
 };
 
@@ -389,6 +442,11 @@ class HelpCommand final : public ISyncCommand
 
 public:
 	explicit HelpCommand(const ICommandParser& parser) : m_parser(parser) {}
+	explicit HelpCommand(const ICommandParser&& parser) = delete;
+	HelpCommand(const HelpCommand&) = delete;
+	HelpCommand& operator=(const HelpCommand&) = delete;
+	HelpCommand(HelpCommand&&) = default;
+	~HelpCommand() override = default;
 
 	[[nodiscard]] std::vector<std::string> Names() const override { return { "help", "?", "h" }; }
 	[[nodiscard]] std::string Description() const override
@@ -437,25 +495,28 @@ public:
 		for (const auto& key : sorted | std::views::keys)
 			maxLen = std::max(maxLen, key.size());
 
-		for (const auto& [fst, snd] : sorted)
+		std::string line;
+		for (const auto& [name, command] : sorted)
 		{
-			std::string aliases;
-			auto names = snd->Names();
+			line.clear();
+			auto inserter = std::back_inserter(line);
+
+			std::string desc = !command->ShortDescription().empty() ? command->ShortDescription() : command->Description();
+			std::format_to(inserter, "{:{}}: {}", name, maxLen, desc);
+
+			auto names = command->Names();
 			if (names.size() > 1)
 			{
-				aliases = " [";
-
 				for (size_t i = 1; i < names.size(); ++i)
 				{
-					if (i > 1) aliases += ", ";
-					aliases += names[i];
+					line.append(i == 1 ? " [" : ", ");
+					line.append(names[i]);
 				}
 
-				aliases += "]";
+				line.push_back(']');
 			}
 
-			o.WriteLine(fst + std::string(maxLen - fst.size(), ' ') + ": " +
-				(!snd->ShortDescription().empty() ? snd->ShortDescription() : snd->Description()) + aliases);
+			o.WriteLine(line);
 		}
 	}
 };
@@ -541,6 +602,7 @@ class ConsoleLoop
 
 public:
 	explicit ConsoleLoop() = default;
+	explicit ConsoleLoop(TState state) : m_state(std::move(state)) {}
 
 	void AddCommand(const std::shared_ptr<ICommand>& command) { m_parser.Add(command); }
 
@@ -552,6 +614,7 @@ public:
 	}
 
 	const ICommandParser& GetParser() const { return m_parser; }
+	TState& GetState() { return m_state; }
 
 	void RunMain()
 	{
