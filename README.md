@@ -9,13 +9,13 @@ namespace CsConsole.Example;
 
 public class SomeState : ICommandState
 {
-    public int Value { get; set; } = 0;
+    public int Value { get; set; }
     public bool Done { get; set; }
 }
 
 internal class Program
 {
-    public async Task Main()
+    public static async Task Main()
     {
         var parser = new CommandParser<SomeState>();
 
@@ -51,8 +51,9 @@ internal class Program
         );
 
         var loop = new ConsoleLoop<SomeState>(parser, new SomeState());
-        var console = new TestConsole("quit");
-        await loop.RunMain(console, console);
+        var cin = new ConsoleInput();
+        var cout = new ConsoleOutput();
+        await loop.RunMain(cin, cout);
     }
 }
 ```

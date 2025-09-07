@@ -3,14 +3,34 @@
 /// <summary>
 /// A simple asynchronous console command class that accepts a delegate for execution.
 /// </summary>
-public class AsyncCommand(string name, AsyncCommandMethod func) : IAsyncCommand
+public class AsyncCommand : IAsyncCommand
 {
-    /// <inheritdoc />
-    public Task InvokeAsync(ArgumentSource args, IConsoleOutput o, CancellationToken ct) =>
-        func(args, o, ct);
+    readonly AsyncCommandMethod _func;
+
+    /// <summary>
+    /// Create a new asynchronous command with the given name and execution function.
+    /// </summary>
+    public AsyncCommand(string name, AsyncCommandMethod func)
+    {
+        _func = func;
+        Names = [name];
+    }
+
+    /// <summary>
+    /// Create a new asynchronous command with the given name and execution function.
+    /// </summary>
+    public AsyncCommand(string[] names, AsyncCommandMethod func)
+    {
+        _func = func;
+        Names = names;
+    }
 
     /// <inheritdoc />
-    public string[] Names { get; } = [name];
+    public Task InvokeAsync(ArgumentSource args, IConsoleOutput o, CancellationToken ct) =>
+        _func(args, o, ct);
+
+    /// <inheritdoc />
+    public string[] Names { get; }
 
     /// <inheritdoc />
     public string? Description { get; init; }
@@ -25,15 +45,35 @@ public class AsyncCommand(string name, AsyncCommandMethod func) : IAsyncCommand
 /// <summary>
 /// A simple asynchronous console command class that accepts a delegate for execution that uses a state object.
 /// </summary>
-public class AsyncCommand<T>(string name, AsyncCommandMethod<T> func) : IAsyncCommand<T>
+public class AsyncCommand<T> : IAsyncCommand<T>
     where T : ICommandState
 {
-    /// <inheritdoc />
-    public Task InvokeAsync(ArgumentSource args, IConsoleOutput o, T state, CancellationToken ct) =>
-        func(args, o, state, ct);
+    readonly AsyncCommandMethod<T> _func;
+
+    /// <summary>
+    /// Create a new asynchronous command with the given name and execution function.
+    /// </summary>
+    public AsyncCommand(string name, AsyncCommandMethod<T> func)
+    {
+        _func = func;
+        Names = [name];
+    }
+
+    /// <summary>
+    /// Create a new asynchronous command with the given name and execution function.
+    /// </summary>
+    public AsyncCommand(string[] names, AsyncCommandMethod<T> func)
+    {
+        _func = func;
+        Names = names;
+    }
 
     /// <inheritdoc />
-    public string[] Names { get; } = [name];
+    public Task InvokeAsync(ArgumentSource args, IConsoleOutput o, T state, CancellationToken ct) =>
+        _func(args, o, state, ct);
+
+    /// <inheritdoc />
+    public string[] Names { get; }
 
     /// <inheritdoc />
     public string? Description { get; init; }
