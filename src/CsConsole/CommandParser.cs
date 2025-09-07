@@ -1,5 +1,9 @@
 ﻿namespace CsConsole;
 
+/// <summary>
+/// The command parser is responsible for parsing command line input and invoking the appropriate command.
+/// </summary>
+/// <typeparam name="TState"></typeparam>
 public class CommandParser<TState> : ICommandParser
     where TState : ICommandState
 {
@@ -7,6 +11,7 @@ public class CommandParser<TState> : ICommandParser
     readonly Dictionary<string, IAsyncCommand<TState>> _commands =
         new(StringComparer.InvariantCultureIgnoreCase);
 
+    /// <inheritdoc />
     public IEnumerable<ICommand> Commands
     {
         get
@@ -16,6 +21,7 @@ public class CommandParser<TState> : ICommandParser
         }
     }
 
+    /// <inheritdoc />
     public bool TryGetCommand(string name, out ICommand? command)
     {
         lock (_syncRoot)
@@ -26,22 +32,32 @@ public class CommandParser<TState> : ICommandParser
         }
     }
 
+    /// <summary>
+    /// Registers a command with the parser.
+    /// </summary>
     public void Add(ICommand command)
     {
         var typedCommand = AsyncCommandAdaptor<TState>.Wrap(command);
         lock (_syncRoot)
         {
             foreach (var alias in typedCommand.Names)
+            {
                 if (_commands.TryGetValue(alias, out var existing))
+                {
                     throw new ConsoleCommandException(
                         $"Could not register alias \"{alias}\" for command {typedCommand} as it is already registered by command {existing}"
                     );
+                }
+            }
 
             foreach (var alias in typedCommand.Names)
                 _commands[alias] = typedCommand;
         }
     }
 
+    /// <summary>
+    /// Parses the given arguments and invokes the appropriate command.
+    /// </summary>
     public async Task Handle(
         IList<string> args,
         IConsoleOutput o,

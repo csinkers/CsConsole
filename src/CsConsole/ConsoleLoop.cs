@@ -2,9 +2,18 @@
 
 namespace CsConsole;
 
+/// <summary>
+/// A console loop that reads input lines, parses them into commands, and executes them using a command parser.
+/// </summary>
+/// <typeparam name="TState"></typeparam>
+/// <param name="parser">The command parser containing the registered commands for the program / loop</param>
+/// <param name="state">The state to maintain between commands</param>
 public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state)
     where TState : ICommandState
 {
+    /// <summary>
+    /// Enters the main command loop, reading lines from the input, parsing them, and executing the corresponding commands until the state indicates to exit.
+    /// </summary>
     public async Task RunMain(IConsoleInput i, IConsoleOutput o)
     {
         var cts = new CancellationTokenSource();

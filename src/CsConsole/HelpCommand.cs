@@ -1,13 +1,25 @@
 ﻿namespace CsConsole;
 
+/// <summary>
+/// Utility command that provides help information about other commands
+/// </summary>
+/// <param name="parser">The parser containing the commands to show help about</param>
 public class HelpCommand(ICommandParser parser) : ISyncCommand
 {
+    /// <inheritdoc />
     public string[] Names => ["help", "?", "h"];
+
+    /// <inheritdoc />
     public string Description =>
         "When given a command line, shows detailed info on the command. When run without an argument, lists all available commands.";
+
+    /// <inheritdoc />
     public string? ShortDescription => null;
+
+    /// <inheritdoc />
     public string Usage => "[command]";
 
+    /// <inheritdoc />
     public void Invoke(ArgumentSource args, IConsoleOutput o)
     {
         if (args.Remaining == 0)

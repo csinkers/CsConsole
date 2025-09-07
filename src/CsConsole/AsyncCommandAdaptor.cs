@@ -1,11 +1,17 @@
 ﻿namespace CsConsole;
 
+/// <summary>
+/// An adaptor that wraps a synchronous or asynchronous command and exposes it as an asynchronous command with state.
+/// </summary>
 public class AsyncCommandAdaptor<TState> : IAsyncCommand<TState>
     where TState : ICommandState
 {
     readonly Func<ArgumentSource, IConsoleOutput, TState, CancellationToken, Task> _invoke;
     readonly ICommand _command;
 
+    /// <summary>
+    /// Wraps the given command in an async command adaptor (if required).
+    /// </summary>
     public static IAsyncCommand<TState> Wrap(ICommand command) =>
         command switch
         {
@@ -44,6 +50,7 @@ public class AsyncCommandAdaptor<TState> : IAsyncCommand<TState>
         _invoke = (args, o, _, ct) => command.InvokeAsync(args, o, ct);
     }
 
+    /// <inheritdoc />
     public Task InvokeAsync(
         ArgumentSource args,
         IConsoleOutput o,
@@ -51,8 +58,15 @@ public class AsyncCommandAdaptor<TState> : IAsyncCommand<TState>
         CancellationToken ct
     ) => _invoke(args, o, state, ct);
 
+    /// <inheritdoc />
     public string[] Names => _command.Names;
+
+    /// <inheritdoc />
     public string? Description => _command.Description;
+
+    /// <inheritdoc />
     public string? ShortDescription => _command.ShortDescription;
+
+    /// <inheritdoc />
     public string? Usage => _command.Usage;
 }
