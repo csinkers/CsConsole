@@ -1,5 +1,6 @@
 # CsConsole
 CsConsole is a simple C# console application utility library that simplifies creating interactive console applications.
+The repository also contains a header-only C++20 library with equivalent functionality.
 
 Example usage:
 ```csharp
