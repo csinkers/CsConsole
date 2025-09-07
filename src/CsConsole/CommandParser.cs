@@ -65,6 +65,9 @@ public class CommandParser<TState> : ICommandParser
         CancellationToken ct
     )
     {
+        if (args.Count == 0) // Ignore empty lines
+            return;
+
         IAsyncCommand<TState>? command;
         lock (_syncRoot)
             if (!_commands.TryGetValue(args[0], out command))

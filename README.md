@@ -14,7 +14,7 @@ public class SomeState : ICommandState
     public bool Done { get; set; }
 }
 
-internal class Program
+internal static class Program
 {
     public static async Task Main()
     {
@@ -33,7 +33,7 @@ internal class Program
             )
             {
                 Description = "Sets the state value to the given integer",
-                Usage = "<value>: The integer value to set",
+                Usage = "<value>",
             }
         );
 
