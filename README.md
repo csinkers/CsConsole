@@ -44,7 +44,7 @@ internal class Program
         );
 
         parser.Add(
-            new SyncCommand<SomeState>("quit", (_, _, state) => state.Done = true)
+            new SyncCommand<SomeState>(["quit", "q", "exit"], (_, _, state) => state.Done = true)
             {
                 Description = "Exits the program",
             }
