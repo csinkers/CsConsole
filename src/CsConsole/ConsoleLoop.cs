@@ -14,7 +14,7 @@ public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state)
     /// <summary>
     /// Enters the main command loop, reading lines from the input, parsing them, and executing the corresponding commands until the state indicates to exit.
     /// </summary>
-    public async Task RunMain(IConsoleInput i, IConsoleOutput o)
+    public async Task RunMain(IConsoleInput i, IConsoleOutput o, bool catchAll = false)
     {
         var cts = new CancellationTokenSource();
         i.Interrupt += OnInterrupt;
@@ -32,6 +32,14 @@ public class ConsoleLoop<TState>(CommandParser<TState> parser, TState state)
                 o.WithForeground(
                     ConsoleColor.Red,
                     cce.Message,
+                    static (o2, msg) => o2.WriteLine(msg)
+                );
+            }
+            catch (Exception ex) when (catchAll)
+            {
+                o.WithForeground(
+                    ConsoleColor.Red,
+                    ex.ToString(),
                     static (o2, msg) => o2.WriteLine(msg)
                 );
             }
