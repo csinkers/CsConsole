@@ -598,11 +598,10 @@ template<typename TState>
 class ConsoleLoop
 {
 	CommandParser<TState> m_parser;
-	TState m_state;
+	std::unique_ptr<TState> m_state;
 
 public:
-	explicit ConsoleLoop() = default;
-	explicit ConsoleLoop(TState state) : m_state(std::move(state)) {}
+	explicit ConsoleLoop(std::unique_ptr<TState> state) : m_state(std::move(state)) {}
 
 	void AddCommand(const std::shared_ptr<ICommand>& command) { m_parser.Add(command); }
 
@@ -614,7 +613,7 @@ public:
 	}
 
 	const ICommandParser& GetParser() const { return m_parser; }
-	TState& GetState() { return m_state; }
+	TState& GetState() { return *m_state; }
 
 	void RunMain()
 	{
@@ -625,7 +624,7 @@ public:
 
 	void RunMain(IConsoleInput& i, IConsoleOutput& o)
 	{
-		while (!m_state.IsDone())
+		while (!m_state->IsDone())
 		{
 			std::string line = i.ReadLine();
 			if (line.empty())
@@ -634,7 +633,7 @@ public:
 			auto parts = SplitLine(line);
 			try
 			{
-				m_parser.Handle(parts, o, m_state);
+				m_parser.Handle(parts, o, *m_state);
 			}
 			catch (const ConsoleCommandException& cce)
 			{
