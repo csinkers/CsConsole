@@ -564,7 +564,6 @@ public:
 			m_commands[alias] = command;
 	}
 
-	// For async, you may want to use std::future or std::async
 	void Handle(const std::vector<std::string>& args, IConsoleOutput& o, TState& state)
 	{
 		std::shared_ptr<ICommand> command;
@@ -576,17 +575,17 @@ public:
 			command = m_commands.at(args[0]);
 		}
 
-		ArgumentSource getter(args, 1);
+		ArgumentSource argumentSource(args, 1);
 
 		if (const auto sync = std::dynamic_pointer_cast<ISyncCommandT<TState>>(command))
 		{
-			sync->Invoke(getter, o, state);
+			sync->Invoke(argumentSource, o, state);
 			return;
 		}
 
 		if (const auto sync = std::dynamic_pointer_cast<ISyncCommand>(command))
 		{
-			sync->Invoke(getter, o);
+			sync->Invoke(argumentSource, o);
 			return;
 		}
 
@@ -599,9 +598,12 @@ class ConsoleLoop
 {
 	CommandParser<TState> m_parser;
 	std::unique_ptr<TState> m_state;
+	std::function<void(CommandParser<TState>&, const std::vector<std::string>&, IConsoleOutput&, TState&)> m_handler;
+	TState* m_rawState; // Non-owning pointer
 
 public:
-	explicit ConsoleLoop(std::unique_ptr<TState> state) : m_state(std::move(state)) {}
+	explicit ConsoleLoop(std::unique_ptr<TState> state) : m_state(std::move(state)), m_rawState(nullptr) { }
+	explicit ConsoleLoop(TState* state) : m_rawState(state) {}
 
 	void AddCommand(const std::shared_ptr<ICommand>& command) { m_parser.Add(command); }
 
@@ -613,7 +615,8 @@ public:
 	}
 
 	const ICommandParser& GetParser() const { return m_parser; }
-	TState& GetState() { return *m_state; }
+	TState& GetState() { return m_rawState ? *m_rawState : *m_state; }
+	void SetInvoker(const std::function<void(CommandParser<TState>&, const std::vector<std::string>&, IConsoleOutput&, TState&)>& handler) { m_handler = handler; }
 
 	void RunMain()
 	{
@@ -624,16 +627,19 @@ public:
 
 	void RunMain(IConsoleInput& i, IConsoleOutput& o)
 	{
-		while (!m_state->IsDone())
+		while (!GetState().IsDone())
 		{
 			std::string line = i.ReadLine();
 			if (line.empty())
 				continue;
 
-			auto parts = SplitLine(line);
+			std::vector<std::string> parts = SplitLine(line);
 			try
 			{
-				m_parser.Handle(parts, o, *m_state);
+				if (m_handler != nullptr)
+					m_handler(m_parser, parts, o, GetState());
+				else
+					m_parser.Handle(parts, o, GetState());
 			}
 			catch (const ConsoleCommandException& cce)
 			{
